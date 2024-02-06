@@ -8,6 +8,11 @@ ENDFLAGS := -fPIC
 ifeq ($(OS),Windows_NT)
 LDFLAGS := $(LDFLAGS) -mwindows
 ENDFLAGS := -static -lole32 -lstdc++
+else
+LDFLAGS := $(LDFLAGS) `sdl2-config --static-libs` -L/usr/lib # Add alsa and pulseaudio libraries for linux audio
+ifneq ($(shell uname),Darwin) # Audio does not seem to be working with these flags on macosx
+ENDFLAGS := $(LDFLAGS) -lasound -lpulse
+endif
 endif
 
 SRC_DIRS  := src src/decomp src/decomp/engine src/decomp/include/PR src/decomp/game src/decomp/pc src/decomp/pc/audio src/decomp/mario src/decomp/tools src/decomp/audio

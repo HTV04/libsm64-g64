@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <pulse/pulseaudio.h>
 
-#include "macros.h"
+#include "../../include/macros.h"
 #include "audio_api.h"
 
 static struct {
@@ -52,20 +52,20 @@ static bool audio_pulse_init(void) {
     if (pas.mainloop == NULL) {
         return false;
     }
-    
+
     // Create context and connect
     pas.context = pa_context_new(pa_mainloop_get_api(pas.mainloop), "Super Mario 64");
     if (pas.context == NULL) {
         goto fail;
     }
-    
+
     bool done = false;
     pa_context_set_state_callback(pas.context, pas_context_state_cb, &done);
-    
+
     if (pa_context_connect(pas.context, NULL, 0, NULL) < 0) {
         goto fail;
     }
-    
+
     while (!done) {
         pa_mainloop_iterate(pas.mainloop, true, NULL);
     }
@@ -73,32 +73,32 @@ static bool audio_pulse_init(void) {
     if (pa_context_get_state(pas.context) != PA_CONTEXT_READY) {
         goto fail;
     }
-    
+
     // Create stream
     pa_sample_spec ss;
     ss.format = PA_SAMPLE_S16LE;
     ss.rate = 32000;
     ss.channels = 2;
-    
+
     pa_buffer_attr attr;
     attr.maxlength = (1600 + 544 + 528 + 1600) * 4;
     attr.tlength = (528*2 + 544) * 4;
     attr.prebuf = 1500 * 4;
     attr.minreq = 161 * 4;
     attr.fragsize = (uint32_t)-1;
-    
+
     pas.stream = pa_stream_new(pas.context, "mario", &ss, NULL);
     if (pas.stream == NULL) {
         goto fail;
     }
-    
+
     done = false;
     pa_stream_set_state_callback(pas.stream, pas_stream_state_cb, &done);
     pa_stream_set_write_callback(pas.stream, pas_stream_write_cb, NULL);
     if (pa_stream_connect_playback(pas.stream, NULL, &attr, PA_STREAM_ADJUST_LATENCY, NULL, NULL) < 0) {
         goto fail;
     }
-    
+
     while (!done) {
         pa_mainloop_iterate(pas.mainloop, true, NULL);
     }
@@ -106,12 +106,12 @@ static bool audio_pulse_init(void) {
     if (pa_stream_get_state(pas.stream) != PA_STREAM_READY) {
         goto fail;
     }
-    
+
     const pa_buffer_attr *applied_attr = pa_stream_get_buffer_attr(pas.stream);
     printf("maxlength: %u\ntlength: %u\nprebuf: %u\nminreq: %u\nfragsize: %u\n",
            applied_attr->maxlength, applied_attr->tlength, applied_attr->prebuf, applied_attr->minreq, applied_attr->fragsize);
     pas.attr = *applied_attr;
-    
+
     return true;
 
 fail:
@@ -162,7 +162,7 @@ static int audio_pulse_buffered(void) {
     int32_t t = info->timestamp.tv_sec * 1000000 + info->timestamp.tv_usec - (usec - info->transport_usec);
     static int t0;
     if (t0 == 0) t0 = t;*/
-    
+
     /*int r = pa_mainloop_iterate(pas.mainloop, false, NULL);
     size_t ws = pa_stream_writable_size(pas.stream);
     printf("Writable: %d (%d) %d %d %d %d %llu %d\n", (int)ws, r, (int)(info->write_index - info->read_index), diff, (int)info->sink_usec, (int)info->transport_usec, (unsigned long long)usec, t - t0);*/
